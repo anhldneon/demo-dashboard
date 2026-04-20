@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Quản Trị Dược Phẩm - Medcomm</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        :root {
+            --primary-red: #b32025;
+            --bg-color: #f0f2f5;
+            --border-color: #d9d9d9;
+            --text-main: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- MENU CHỐNG VỠ (THEO ẢNH 1) --- */
+        .navbar {
+            background-color: var(--primary-red);
+            display: flex;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 0 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item {
+            color: white;
+            padding: 12px 15px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item.active {
+            background-color: #8a161a;
+            border-bottom: 3px solid white;
+        }
+
+        /* --- LAYOUT DASHBOARD --- */
+        .container {
+            max-width: 1600px;
+            margin: 15px auto;
+            padding: 0 10%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .col-6 {
+            flex: 1;
+            min-width: 480px;
+        }
+
+        /* --- SEARCH CONTROLS --- */
+        .header-stack {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            border-left: 4px solid var(--primary-red);
+            padding-left: 8px;
+            text-transform: uppercase;
+        }
+
+        .search-controls {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        input[type="date"],
+        input[type="text"],
+        select {
+            padding: 4px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 12px;
+            outline: none;
+        }
+
+        .btn-search {
+            background: var(--primary-red);
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        /* --- SWITCH BUTTONS --- */
+        .switch-group {
+            display: flex;
+            background: #f0f0f0;
+            padding: 2px;
+            border-radius: 4px;
+        }
+
+        .switch-btn {
+            border: none;
+            padding: 4px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 11px;
+            background: transparent;
+            color: #666;
+        }
+
+        .switch-btn.active {
+            background: white;
+            color: var(--primary-red);
+            font-weight: bold;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- TABLE STYLES (THEO ẢNH 4, 5) --- */
+        .table-wrapper {
+            margin-top: 10px;
+            border: 1px solid #f0f0f0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        th {
+            background: #e6f7ff;
+            color: #003a8c;
+            padding: 10px;
+            text-align: left;
+            border-bottom: 2px solid #bae7ff;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .warning-red {
+            color: #f5222d;
+            font-weight: bold;
+        }
+
+        .tag-branch {
+            background: #f5f5f5;
+            color: #555;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            border: 1px solid #d9d9d9;
+        }
+
+        .status-dot {
+            height: 7px;
+            width: 7px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        /* --- PAGINATION --- */
+        .pagination-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 4px 2px;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .pagination-info {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .page-btn {
+            border: 1px solid #d9d9d9;
+            background: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            color: #333;
+            min-width: 28px;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            border-color: var(--primary-red);
+            color: var(--primary-red);
+        }
+
+        .page-btn.active {
+            background: var(--primary-red);
+            border-color: var(--primary-red);
+            color: white;
+            font-weight: bold;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-size-select {
+            padding: 3px 6px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 11px;
+            outline: none;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="#" class="nav-item active">🏠 TỔNG QUAN</a>
+        <a href="#" class="nav-item">📦 SẢN PHẨM</a>
+        <a href="#" class="nav-item">🔄 GIAO DỊCH</a>
+        <a href="#" class="nav-item">👥 ĐỐI TÁC</a>
+        <a href="#" class="nav-item">🚚 KHO</a>
+        <a href="#" class="nav-item">💳 SỔ QUỸ</a>
+        <a href="#" class="nav-item">👔 NHÂN VIÊN</a>
+        <a href="#" class="nav-item">📊 BÁO CÁO</a>
+        <a href="#" class="nav-item">🛒 BÁN HÀNG</a>
+    </nav>
+
+    <div class="container">
+
+        <div class="card" style="padding: 10px 15px;">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <span style="font-size:12px;font-weight:600;color:#333;">⚙️ Cấu hình:</span>
+                <label style="font-size:12px;color:#666;">Số chi nhánh:</label>
+                <input type="number" id="branch-count-input" value="30" min="1" max="100"
+                    style="width:70px;padding:4px 8px;border:1px solid #d9d9d9;border-radius:4px;font-size:12px;"
+                    onchange="applyBranchCount()">
+                <button class="btn-search" onclick="applyBranchCount()">Áp dụng</button>
+                <span id="branch-count-note" style="font-size:11px;color:#999;"></span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="header-stack">
+                <h2 id="branch-chart-title">Doanh thu chi nhánh (30 CN)</h2>
+                <div class="search-controls">
+                    <input type="date" class="date-input">
+                    <span>~</span>
+                    <input type="date" class="date-input">
+                    <button class="btn-search" onclick="initBranchChart()">Lọc dữ liệu</button>
+                </div>
+            </div>
+            <div id="branch-chart" style="width: 100%; height: 300px;"></div>
+        </div>
+
+        <div class="card">
+            <div class="header-stack">
+                <div>
+                    <h2>Phân bổ doanh thu</h2>
+                    <p id="pie-subtitle" style="margin:4px 0 0 12px;font-size:11px;color:#888;">Phân bổ doanh thu của top 10 chi nhánh cao nhất</p>
+                </div>
+                <div class="search-controls">
+                    <div class="switch-group">
+                        <button id="btn-pie-branch" class="switch-btn active" onclick="updatePieChart('branch')">Chi nhánh</button>
+                        <button id="btn-pie-product" class="switch-btn" onclick="updatePieChart('product')">Sản phẩm</button>
+                        <button id="btn-pie-staff" class="switch-btn" onclick="updatePieChart('staff')">Nhân viên</button>
+                    </div>
+                </div>
+            </div>
+            <div id="pie-chart" style="width: 100%; height: 320px;"></div>
+        </div>
+
+        <div class="row">
+            <div class="card col-6">
+                <div class="header-stack">
+                    <h2>Top 10 Sản phẩm bán chạy</h2>
+                    <div class="search-controls">
+                        <div class="switch-group">
+                            <button id="btn-sales" class="switch-btn active" onclick="updateProductChart('sales')">Doanh thu</button>
+                            <button id="btn-qty" class="switch-btn" onclick="updateProductChart('quantity')">Số lượng</button>
+                        </div>
+                        <button class="btn-search" onclick="updateProductChart(currentProductMode)">🔄</button>
+                    </div>
+                </div>
+                <div id="product-chart" style="width: 100%; height: 350px;"></div>
+            </div>
+
+            <div class="card col-6">
+                <div class="header-stack">
+                    <h2>Top 10 Nhân viên doanh thu cao</h2>
+                    <div class="search-controls">
+                        <input type="date" class="date-input">
+                        <button class="btn-search" onclick="initStaffChart()">Tìm</button>
+                    </div>
+                </div>
+                <div id="staff-chart" style="width: 100%; height: 350px;"></div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="card col-6">
+                <div class="header-stack">
+                    <h2>⚠️ Cảnh báo thuốc hết hạn</h2>
+                    <div class="search-controls">
+                        <label style="font-size:11px;color:#666">Hiển thị:</label>
+                        <select class="page-size-select" id="expiry-page-size" onchange="expiryPage=1;renderExpiry()">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </select>
+                        <label style="font-size:11px;color:#666">bản ghi</label>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Mã SP</th>
+                                <th>Tên sản phẩm</th>
+                                <th>Ngày còn</th>
+                                <th>Chi nhánh</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expiry-table-body"></tbody>
+                    </table>
+                </div>
+                <div class="pagination-bar">
+                    <span class="pagination-info" id="expiry-info"></span>
+                    <div class="pagination-controls" id="expiry-pagination"></div>
+                </div>
+            </div>
+
+            <div class="card col-6">
+                <div class="header-stack">
+                    <h2>📉 Sản phẩm sắp hết hàng</h2>
+                    <div class="search-controls">
+                        <label style="font-size:11px;color:#666">Hiển thị:</label>
+                        <select class="page-size-select" id="stock-page-size" onchange="stockPage=1;renderStock()">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </select>
+                        <label style="font-size:11px;color:#666">bản ghi</label>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Mã SP</th>
+                                <th>Tên sản phẩm</th>
+                                <th>Tồn hiện tại</th>
+                                <th>Chi nhánh</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stock-table-body"></tbody>
+                    </table>
+                </div>
+                <div class="pagination-bar">
+                    <span class="pagination-info" id="stock-info"></span>
+                    <div class="pagination-controls" id="stock-pagination"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Khởi tạo các đối tượng Chart
+        const branchChart = echarts.init(document.getElementById('branch-chart'));
+        const productChart = echarts.init(document.getElementById('product-chart'));
+        const staffChart = echarts.init(document.getElementById('staff-chart'));
+        const pieChart = echarts.init(document.getElementById('pie-chart'));
+
+        // Gán ngày mặc định
+        document.querySelectorAll('.date-input').forEach(i => i.value = new Date().toISOString().split('T')[0]);
+
+        let branchCount = 30;
+
+        function applyBranchCount() {
+            const input = document.getElementById('branch-count-input');
+            const val = Math.max(1, Math.min(100, Number.parseInt(input.value) || 30));
+            input.value = val;
+            branchCount = val;
+            document.getElementById('branch-count-note').textContent = `Đã áp dụng ${val} chi nhánh`;
+            renderAll();
+        }
+
+        function renderAll() {
+            document.getElementById('branch-chart-title').textContent = `Doanh thu chi nhánh (${branchCount} CN)`;
+            initBranchChart();
+            updatePieChart(currentPieMode);
+            updateProductChart(currentProductMode);
+            initStaffChart();
+        }
+
+        // --- 1. BIỂU ĐỒ CHI NHÁNH ---
+        let branchChartData = [];
+
+        function initBranchChart() {
+            const names = Array.from({ length: branchCount }, (_, i) => `CN${(i + 1).toString().padStart(2, '0')}`);
+            const values = names.map(() => Math.floor(Math.random() * 901) + 100);
+            branchChartData = names.map((name, i) => ({ name, value: values[i] }));
+            const threshold = 500;
+
+            branchChart.setOption({
+                tooltip: { trigger: 'axis', valueFormatter: v => v.toLocaleString('vi-VN') + ' Tr' },
+                xAxis: { type: 'category', data: names, axisLabel: { rotate: 45, interval: 0, fontSize: 9 } },
+                yAxis: { type: 'value', max: 1000, name: 'Triệu VNĐ', axisLabel: { formatter: v => v >= 1000 ? '1 Tỷ' : v + 'M' } },
+                series: [{
+                    type: 'bar',
+                    data: values.map(v => ({ value: v, itemStyle: { color: v >= threshold ? '#52c41a' : '#f5222d' } })),
+                    markLine: {
+                        symbol: ['none', 'none'],
+                        label: { formatter: 'Ngưỡng: 500Tr' },
+                        lineStyle: { color: '#f5222d', type: 'dashed' },
+                        data: [{ yAxis: threshold }]
+                    }
+                }]
+            });
+        }
+
+        // --- 2. BIỂU ĐỒ PHÂN BỔ DOANH THU (HÌNH TRÒN) ---
+        const pieDataSets = {
+            product: ['Panadol', 'Augmentin', 'Hapacol', 'Nexium', 'Berocca', 'Gaviscon', 'Efferalgan', 'Mobic', 'Zinnat', 'Decolgen'],
+            staff: ['Anh LD', 'Minh NV', 'Hoa BT', 'Tuấn NA', 'Linh PT', 'Dũng Lê', 'Hương Vũ', 'Sơn Đỗ', 'Lan Ngô', 'Quang Trần']
+        };
+        const pieColors = ['#1890ff','#52c41a','#faad14','#f5222d','#722ed1','#13c2c2','#eb2f96','#2f54eb','#fa8c16','#a0d911',
+                           '#36cfc9','#ff85c0','#ffc069','#95de64','#69b1ff','#b37feb','#ff9c6e','#5cdbd3','#85a5ff','#ffec3d',
+                           '#ffd666','#d3f261','#87e8de','#ffadd2','#adc6ff','#d3adf7','#ffbb96','#b7eb8f','#91caff','#ffe58f'];
+
+        let currentPieMode = 'branch';
+
+        const pieSubtitles = {
+            branch: 'Phân bổ doanh thu của top 10 chi nhánh cao nhất',
+            product: 'Phân bổ doanh thu của top 10 sản phẩm bán chạy nhất',
+            staff: 'Phân bổ doanh thu của top 10 nhân viên cao nhất'
+        };
+
+        function updatePieChart(mode) {
+            currentPieMode = mode;
+            ['branch', 'product', 'staff'].forEach(m => {
+                document.getElementById(`btn-pie-${m}`).classList.toggle('active', m === mode);
+            });
+            document.getElementById('pie-subtitle').textContent = pieSubtitles[mode];
+
+            let data;
+            if (mode === 'branch') {
+                const sorted = [...branchChartData].sort((a, b) => b.value - a.value);
+                if (sorted.length <= 10) {
+                    data = sorted;
+                } else {
+                    const top10 = sorted.slice(0, 10);
+                    const othersValue = sorted.slice(10).reduce((sum, d) => sum + d.value, 0);
+                    data = [...top10, { name: 'Khác', value: othersValue }];
+                }
+            } else {
+                data = pieDataSets[mode]
+                    .map(name => ({ name, value: Math.floor(Math.random() * 400) + 100 }))
+                    .sort((a, b) => b.value - a.value);
+            }
+
+            pieChart.setOption({
+                tooltip: { trigger: 'item', formatter: '{b}: {c} Tr ({d}%)' },
+                legend: {
+                    type: 'scroll',
+                    orient: 'vertical',
+                    right: '2%',
+                    top: 'middle',
+                    textStyle: { fontSize: 11 },
+                    pageTextStyle: { fontSize: 10 }
+                },
+                series: [{
+                    type: 'pie',
+                    radius: ['35%', '65%'],
+                    center: ['38%', '50%'],
+                    avoidLabelOverlap: true,
+                    label: { show: true, formatter: '{b}\n{d}%', fontSize: 10 },
+                    labelLine: { show: true },
+                    emphasis: { label: { show: true, fontSize: 12, fontWeight: 'bold' } },
+                    data: data.map((d, i) => ({ ...d, itemStyle: { color: pieColors[i % pieColors.length] } }))
+                }]
+            }, true);
+        }
+
+        // --- 3. BIỂU ĐỒ SẢN PHẨM (TOP 10 RANDOM) ---
+        let currentProductMode = 'sales';
+        const productList = ['Panadol', 'Augmentin', 'Hapacol', 'Decolgen', 'Nexium', 'Berocca', 'Gaviscon', 'Efferalgan', 'Mobic', 'Zinnat', 'Paracetamol', 'Amoxicillin'];
+
+        function updateProductChart(mode) {
+            currentProductMode = mode;
+            const isSales = mode === 'sales';
+            document.getElementById('btn-sales').classList.toggle('active', isSales);
+            document.getElementById('btn-qty').classList.toggle('active', !isSales);
+
+            // Tạo 10 sản phẩm ngẫu nhiên và số liệu ngẫu nhiên, sort từ cao đến thấp
+            const randomProducts = [...productList].sort(() => 0.5 - Math.random()).slice(0, 10);
+            const values = randomProducts.map(() => Math.floor(Math.random() * (isSales ? 200 : 5000)) + 50);
+
+            const productData = randomProducts.map((name, i) => ({ name, value: values[i] }));
+            productData.sort((a, b) => b.value - a.value);
+            const sortedProducts = productData.map(d => d.name);
+            const sortedValues = productData.map(d => d.value);
+
+            productChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: sortedProducts, axisLabel: { rotate: 30, fontSize: 10 } },
+                yAxis: { type: 'value', name: isSales ? 'Triệu VNĐ' : 'Đơn vị' },
+                series: [{
+                    type: 'bar',
+                    data: sortedValues,
+                    itemStyle: { color: isSales ? '#1890ff' : '#722ed1' },
+                    label: { show: true, position: 'top', fontSize: 10 }
+                }]
+            }, true);
+        }
+
+        // --- 3. BIỂU ĐỒ NHÂN VIÊN (TOP 10 RANDOM) ---
+        const staffList = ['Anh LD', 'Minh NV', 'Hoa BT', 'Tuấn NA', 'Linh PT', 'Dũng Lê', 'Hương Vũ', 'Sơn Đỗ', 'Lan Ngô', 'Quang Trần', 'Thảo Nguyễn', 'Hùng Phạm'];
+
+        function initStaffChart() {
+            const randomStaff = [...staffList].sort(() => 0.5 - Math.random()).slice(0, 10);
+            const values = randomStaff.map(() => Math.floor(Math.random() * 150) + 50);
+
+            // Sort từ cao đến thấp
+            const staffData = randomStaff.map((name, i) => ({ name, value: values[i] }));
+            staffData.sort((a, b) => b.value - a.value);
+            const sortedNames = staffData.map(d => d.name);
+            const sortedValues = staffData.map(d => d.value);
+
+            staffChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: sortedNames, axisLabel: { rotate: 30 } },
+                yAxis: { type: 'value', name: 'Triệu VNĐ' },
+                series: [{
+                    type: 'bar',
+                    data: sortedValues.map((v, i) => ({
+                        value: v,
+                        itemStyle: { color: i < 3 ? '#faad14' : '#52c41a' }
+                    })),
+                    label: { show: true, position: 'top' }
+                }]
+            }, true);
+        }
+
+        // --- 4. BẢNG DỮ LIỆU VỚI PHÂN TRANG ---
+        const expiryData = Array.from({ length: 50 }, (_, i) => ({
+            code: `SP${(100 + Math.floor(Math.random() * 900)).toString()}`,
+            name: `Thuốc đặc trị mẫu ${i + 1}`,
+            days: Math.floor(Math.random() * 25) + 1,
+            branch: Math.floor(Math.random() * 5) + 1
+        }));
+
+        const stockData = Array.from({ length: 50 }, (_, i) => ({
+            code: `SP${(100 + Math.floor(Math.random() * 900)).toString()}`,
+            name: `Sản phẩm tồn kho ${i + 1}`,
+            qty: Math.floor(Math.random() * 50),
+            branch: Math.floor(Math.random() * 5) + 1
+        }));
+
+        let expiryPage = 1;
+        let stockPage = 1;
+
+        function renderPagination(containerId, currentPage, totalPages, onPageChange) {
+            const container = document.getElementById(containerId);
+            let html = '';
+            html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="${onPageChange}(${currentPage - 1})">&#8249;</button>`;
+            const delta = 2;
+            for (let p = 1; p <= totalPages; p++) {
+                if (p === 1 || p === totalPages || (p >= currentPage - delta && p <= currentPage + delta)) {
+                    html += `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="${onPageChange}(${p})">${p}</button>`;
+                } else if (p === currentPage - delta - 1 || p === currentPage + delta + 1) {
+                    html += `<span style="font-size:11px;color:#999;padding:0 2px">...</span>`;
+                }
+            }
+            html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="${onPageChange}(${currentPage + 1})">&#8250;</button>`;
+            container.innerHTML = html;
+        }
+
+        function renderExpiry(page) {
+            if (page !== undefined) expiryPage = page;
+            const pageSize = Number.parseInt(document.getElementById('expiry-page-size').value);
+            const totalPages = Math.ceil(expiryData.length / pageSize);
+            const start = (expiryPage - 1) * pageSize;
+            const slice = expiryData.slice(start, start + pageSize);
+
+            document.getElementById('expiry-table-body').innerHTML = slice.map((row, i) => `
+                <tr>
+                    <td>${start + i + 1} <span class="status-dot" style="background:#faad14"></span></td>
+                    <td style="color:#1890ff">${row.code}</td>
+                    <td>${row.name}</td>
+                    <td class="warning-red">${row.days} ngày</td>
+                    <td><span class="tag-branch">Chi nhánh ${row.branch}</span></td>
+                </tr>
+            `).join('');
+
+            document.getElementById('expiry-info').textContent =
+                `Hiển thị ${start + 1}–${Math.min(start + pageSize, expiryData.length)} / ${expiryData.length} bản ghi`;
+            renderPagination('expiry-pagination', expiryPage, totalPages, 'renderExpiry');
+        }
+
+        function renderStock(page) {
+            if (page !== undefined) stockPage = page;
+            const pageSize = Number.parseInt(document.getElementById('stock-page-size').value);
+            const totalPages = Math.ceil(stockData.length / pageSize);
+            const start = (stockPage - 1) * pageSize;
+            const slice = stockData.slice(start, start + pageSize);
+
+            document.getElementById('stock-table-body').innerHTML = slice.map((row, i) => `
+                <tr>
+                    <td>${start + i + 1}</td>
+                    <td style="color:#1890ff">${row.code}</td>
+                    <td>${row.name}</td>
+                    <td class="warning-red">${row.qty}</td>
+                    <td><span class="tag-branch">Chi nhánh ${row.branch}</span></td>
+                </tr>
+            `).join('');
+
+            document.getElementById('stock-info').textContent =
+                `Hiển thị ${start + 1}–${Math.min(start + pageSize, stockData.length)} / ${stockData.length} bản ghi`;
+            renderPagination('stock-pagination', stockPage, totalPages, 'renderStock');
+        }
+
+        function renderTables() {
+            renderExpiry();
+            renderStock();
+        }
+
+        // Khởi tạo ban đầu
+        renderAll();
+        renderTables();
+
+        window.addEventListener('resize', () => {
+            branchChart.resize();
+            pieChart.resize();
+            productChart.resize();
+            staffChart.resize();
+        });
+    </script>
+</body>
+
+</html>
